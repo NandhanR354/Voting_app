@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Political Alliance Voting System</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="loading-spinner hidden">
+        <div class="spinner"></div>
+        <p>Processing...</p>
+    </div>
+
+    <!-- Login Page -->
+    <div id="loginPage" class="page active">
+        <div class="container">
+            <div class="login-card">
+                <h1>Political Alliance Voting System</h1>
+                <h2>Voter Login</h2>
+                <form id="loginForm" class="login-form">
+                    <div class="form-group">
+                        <label for="voterId" class="form-label">Voter ID</label>
+                        <input 
+                            type="text" 
+                            id="voterId" 
+                            class="form-control" 
+                            placeholder="Enter your Voter ID (ABC0000000)"
+                            required
+                            maxlength="10"
+                        >
+                        <div id="loginError" class="error-message hidden"></div>
+                        <small class="help-text">Format: 3 letters followed by 7 numbers (e.g., ABC1234567)</small>
+                    </div>
+                    <button type="submit" class="btn btn--primary btn--full-width">Login to Vote</button>
+                </form>
+                <button id="adminAccessBtn" class="btn btn--outline admin-access-btn">Admin Panel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Voting Page -->
+    <div id="votingPage" class="page">
+        <div class="container">
+            <div class="voting-header">
+                <h1>Cast Your Vote</h1>
+                <p>Choose your preferred alliance</p>
+                <div class="voter-info">
+                    <span>Voter ID: <strong id="currentVoterId"></strong></span>
+                </div>
+            </div>
+
+            <div class="alliances-grid">
+                <div class="alliance-card" data-alliance="1">
+                    <div class="alliance-icon">
+                        <img id="votingIcon1" src="" alt="TVK Alliance" style="display: none;">
+                        <div class="icon-placeholder">📊</div>
+                    </div>
+                    <h3>TVK Alliance</h3>
+                    <button class="btn btn--primary vote-btn" data-alliance="1">
+                        Vote for TVK Alliance
+                    </button>
+                </div>
+
+                <div class="alliance-card" data-alliance="2">
+                    <div class="alliance-icon">
+                        <img id="votingIcon2" src="" alt="DMK Alliance" style="display: none;">
+                        <div class="icon-placeholder">🗳️</div>
+                    </div>
+                    <h3>DMK Alliance</h3>
+                    <button class="btn btn--primary vote-btn" data-alliance="2">
+                        Vote for DMK Alliance
+                    </button>
+                </div>
+
+                <div class="alliance-card" data-alliance="3">
+                    <div class="alliance-icon">
+                        <img id="votingIcon3" src="" alt="ADMK Alliance" style="display: none;">
+                        <div class="icon-placeholder">⚡</div>
+                    </div>
+                    <h3>ADMK Alliance</h3>
+                    <button class="btn btn--primary vote-btn" data-alliance="3">
+                        Vote for ADMK Alliance
+                    </button>
+                </div>
+            </div>
+
+            <div class="voting-footer">
+                <button class="btn btn--outline back-to-voting">Back to Login</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Page -->
+    <div id="adminPage" class="page">
+        <!-- Admin Login Section -->
+        <div id="adminLogin" class="admin-section active">
+            <div class="container">
+                <div class="admin-login-card">
+                    <h1>Admin Login</h1>
+                    <form id="adminLoginForm" class="admin-login-form">
+                        <div class="form-group">
+                            <label for="adminPassword" class="form-label">Admin Password</label>
+                            <input 
+                                type="password" 
+                                id="adminPassword" 
+                                class="form-control" 
+                                placeholder="Enter admin password"
+                                required
+                            >
+                            <div id="adminError" class="error-message hidden"></div>
+                        </div>
+                        <button type="submit" class="btn btn--primary btn--full-width">Login</button>
+                    </form>
+                    <button class="btn btn--outline back-to-voting">Back to Voting</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Admin Dashboard Section -->
+        <div id="adminDashboard" class="admin-section">
+            <div class="container">
+                <div class="admin-header">
+                    <h1>Admin Dashboard</h1>
+                    <div class="admin-stats">
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalVotes">0</div>
+                            <div class="stat-label">Total Votes</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-number" id="totalVoters">0</div>
+                            <div class="stat-label">Unique Voters</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Voting Results -->
+                <div class="results-section">
+                    <h2>Live Results</h2>
+                    <div class="results-grid">
+                        <div class="result-card">
+                            <div class="alliance-result">
+                                <div class="alliance-info">
+                                    <img id="icon1" src="" alt="TVK Alliance" style="display: none;">
+                                    <div class="alliance-details">
+                                        <h3>TVK Alliance</h3>
+                                        <div class="vote-count">
+                                            <span id="alliance1Votes">0</span> votes
+                                            (<span id="alliance1Percentage">0.0</span>)
+                                        </div>
+                                        <div class="voter-count">
+                                            Voters: <span id="alliance1VoterCount">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="alliance1Progress" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="result-card">
+                            <div class="alliance-result">
+                                <div class="alliance-info">
+                                    <img id="icon2" src="" alt="DMK Alliance" style="display: none;">
+                                    <div class="alliance-details">
+                                        <h3>DMK Alliance</h3>
+                                        <div class="vote-count">
+                                            <span id="alliance2Votes">0</span> votes
+                                            (<span id="alliance2Percentage">0.0</span>)
+                                        </div>
+                                        <div class="voter-count">
+                                            Voters: <span id="alliance2VoterCount">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="alliance2Progress" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="result-card">
+                            <div class="alliance-result">
+                                <div class="alliance-info">
+                                    <img id="icon3" src="" alt="ADMK Alliance" style="display: none;">
+                                    <div class="alliance-details">
+                                        <h3>ADMK Alliance</h3>
+                                        <div class="vote-count">
+                                            <span id="alliance3Votes">0</span> votes
+                                            (<span id="alliance3Percentage">0.0</span>)
+                                        </div>
+                                        <div class="voter-count">
+                                            Voters: <span id="alliance3VoterCount">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="alliance3Progress" style="width: 0%;"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CSV Download Section -->
+                <div class="csv-download-section">
+                    <h2>📊 Download Voter Data (CSV)</h2>
+                    <div class="csv-description">
+                        <p>Download complete voter lists with timestamps for each alliance or all voters combined.</p>
+                    </div>
+
+                    <div class="csv-buttons-grid">
+                        <div class="csv-button-card">
+                            <h4>TVK Alliance Voters</h4>
+                            <p>Download list of all TVK voters with timestamps</p>
+                            <button id="downloadTVKCSV" class="btn btn--outline csv-btn">
+                                📥 Download TVK CSV
+                            </button>
+                        </div>
+
+                        <div class="csv-button-card">
+                            <h4>DMK Alliance Voters</h4>
+                            <p>Download list of all DMK voters with timestamps</p>
+                            <button id="downloadDMKCSV" class="btn btn--outline csv-btn">
+                                📥 Download DMK CSV
+                            </button>
+                        </div>
+
+                        <div class="csv-button-card">
+                            <h4>ADMK Alliance Voters</h4>
+                            <p>Download list of all ADMK voters with timestamps</p>
+                            <button id="downloadADMKCSV" class="btn btn--outline csv-btn">
+                                📥 Download ADMK CSV
+                            </button>
+                        </div>
+
+                        <div class="csv-button-card featured">
+                            <h4>All Voters Combined</h4>
+                            <p>Download complete voter database with all alliances</p>
+                            <button id="downloadAllCSV" class="btn btn--primary csv-btn">
+                                📥 Download All Voters CSV
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Image Upload Section -->
+                <div class="image-upload-section">
+                    <h2>Alliance Icons</h2>
+                    <div class="upload-grid">
+                        <div class="upload-card">
+                            <h4>TVK Alliance Icon</h4>
+                            <div class="current-icon">
+                                <img id="adminIcon1" src="" alt="TVK Alliance" style="display: none;">
+                                <div class="icon-placeholder">📊</div>
+                            </div>
+                            <input type="file" id="uploadIcon1" accept="image/*" class="file-input">
+                            <label for="uploadIcon1" class="btn btn--outline">Choose Image</label>
+                        </div>
+
+                        <div class="upload-card">
+                            <h4>DMK Alliance Icon</h4>
+                            <div class="current-icon">
+                                <img id="adminIcon2" src="" alt="DMK Alliance" style="display: none;">
+                                <div class="icon-placeholder">🗳️</div>
+                            </div>
+                            <input type="file" id="uploadIcon2" accept="image/*" class="file-input">
+                            <label for="uploadIcon2" class="btn btn--outline">Choose Image</label>
+                        </div>
+
+                        <div class="upload-card">
+                            <h4>ADMK Alliance Icon</h4>
+                            <div class="current-icon">
+                                <img id="adminIcon3" src="" alt="ADMK Alliance" style="display: none;">
+                                <div class="icon-placeholder">⚡</div>
+                            </div>
+                            <input type="file" id="uploadIcon3" accept="image/*" class="file-input">
+                            <label for="uploadIcon3" class="btn btn--outline">Choose Image</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Admin Actions -->
+                <div class="admin-actions">
+                    <button id="resetPollData" class="btn btn--danger">Reset Poll Data</button>
+                    <button class="btn btn--outline back-to-voting">Back to Voting</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Success Modal -->
+    <div id="successModal" class="modal hidden">
+        <div class="modal-backdrop"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>✅ Vote Recorded Successfully!</h2>
+            </div>
+            <div class="modal-body">
+                <p>Thank you for participating in the voting process.</p>
+                <p>Your vote has been securely recorded and cannot be changed.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn--primary modal-close">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
