@@ -6,7 +6,7 @@ let appData = {
     {id: 3, name: "ADMK Alliance", votes: 0, icon: "", voterIds: []}
   ],
   votedIds: [],
-  adminPassword: "admin123",  // ← CHANGE YOUR PASSWORD HERE
+  adminPassword: "28121961",  // ← CHANGE YOUR PASSWORD HERE
   currentVoterId: "",
   isAdminLoggedIn: false
 };
