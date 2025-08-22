@@ -1,4 +1,4 @@
-// Application Data with CSV tracking
+// Application Data with persistent storage
 let appData = {
   alliances: [
     {id: 1, name: "TVK Alliance", votes: 0, icon: "", voterIds: []},
@@ -6,10 +6,98 @@ let appData = {
     {id: 3, name: "ADMK Alliance", votes: 0, icon: "", voterIds: []}
   ],
   votedIds: [],
-  adminPassword: "28121961",  // ← CHANGE YOUR PASSWORD HERE
+  adminPassword: "admin123",  // ← CHANGE YOUR PASSWORD HERE
   currentVoterId: "",
   isAdminLoggedIn: false
 };
+
+// Storage key for persistence
+const STORAGE_KEY = 'politicalVotingSystemData';
+
+// Save data to localStorage
+function saveData() {
+  try {
+    const dataToSave = {
+      alliances: appData.alliances,
+      votedIds: appData.votedIds,
+      lastUpdated: new Date().toISOString()
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(dataToSave));
+    console.log('Data saved successfully');
+  } catch (e) {
+    console.warn('Could not save data to localStorage:', e);
+  }
+}
+
+// Load data from localStorage
+function loadData() {
+  try {
+    const savedData = localStorage.getItem(STORAGE_KEY);
+    if (savedData) {
+      const parsed = JSON.parse(savedData);
+      console.log('Loading saved data:', parsed);
+
+      // Validate data structure
+      if (parsed.alliances && Array.isArray(parsed.alliances) && parsed.alliances.length === 3) {
+        appData.alliances = parsed.alliances;
+        appData.votedIds = parsed.votedIds || [];
+
+        console.log('Data loaded successfully');
+        console.log('Total votes:', appData.alliances.reduce((sum, a) => sum + a.votes, 0));
+        console.log('Voted IDs:', appData.votedIds.length);
+
+        return true;
+      }
+    }
+  } catch (e) {
+    console.warn('Could not load saved data:', e);
+  }
+  return false;
+}
+
+// Initialize data on page load
+function initializeData() {
+  const dataLoaded = loadData();
+  if (dataLoaded) {
+    console.log('Using saved data');
+    // Update any displayed data
+    updateIconsFromData();
+    if (appData.isAdminLoggedIn) {
+      updateAdminDashboard();
+    }
+  } else {
+    console.log('Starting with fresh data');
+    // Save initial empty state
+    saveData();
+  }
+}
+
+// Update icons from loaded data
+function updateIconsFromData() {
+  appData.alliances.forEach(alliance => {
+    if (alliance.icon) {
+      // Update voting page icons
+      const votingIcon = document.getElementById(`votingIcon${alliance.id}`);
+      if (votingIcon) {
+        votingIcon.src = alliance.icon;
+        votingIcon.style.display = 'block';
+      }
+
+      // Update admin page icons
+      const adminIcon = document.getElementById(`icon${alliance.id}`);
+      if (adminIcon) {
+        adminIcon.src = alliance.icon;
+        adminIcon.style.display = 'block';
+      }
+
+      const adminIcon2 = document.getElementById(`adminIcon${alliance.id}`);
+      if (adminIcon2) {
+        adminIcon2.src = alliance.icon;
+        adminIcon2.style.display = 'block';
+      }
+    }
+  });
+}
 
 // Utility Functions
 function showPage(pageName) {
@@ -213,6 +301,9 @@ function handleVote(allianceId) {
     // Add to voted IDs list
     appData.votedIds.push(voterId);
 
+    // IMPORTANT: Save data immediately after vote
+    saveData();
+
     // Clear current voter
     appData.currentVoterId = '';
 
@@ -223,6 +314,9 @@ function handleVote(allianceId) {
     if (appData.isAdminLoggedIn) {
       updateAdminDashboard();
     }
+
+    console.log('Vote recorded for:', voterId, 'Alliance:', alliance.name);
+    console.log('Total votes now:', alliance.votes);
   }
 }
 
@@ -245,22 +339,30 @@ function handleAdminLogin(event) {
 
 function updateAdminDashboard() {
   const totalVotes = appData.alliances.reduce((sum, alliance) => sum + alliance.votes, 0);
-  document.getElementById('totalVotes').textContent = totalVotes;
-  document.getElementById('totalVoters').textContent = appData.votedIds.length;
 
+  // Update total statistics
+  const totalVotesEl = document.getElementById('totalVotes');
+  const totalVotersEl = document.getElementById('totalVoters');
+
+  if (totalVotesEl) totalVotesEl.textContent = totalVotes;
+  if (totalVotersEl) totalVotersEl.textContent = appData.votedIds.length;
+
+  // Update individual alliance statistics
   appData.alliances.forEach(alliance => {
     const percentage = totalVotes > 0 ? ((alliance.votes / totalVotes) * 100).toFixed(1) : '0.0';
 
-    document.getElementById(`alliance${alliance.id}Votes`).textContent = alliance.votes;
-    document.getElementById(`alliance${alliance.id}Percentage`).textContent = percentage + '%';
-    document.getElementById(`alliance${alliance.id}VoterCount`).textContent = alliance.voterIds.length;
+    const votesEl = document.getElementById(`alliance${alliance.id}Votes`);
+    const percentageEl = document.getElementById(`alliance${alliance.id}Percentage`);
+    const voterCountEl = document.getElementById(`alliance${alliance.id}VoterCount`);
+    const progressBarEl = document.getElementById(`alliance${alliance.id}Progress`);
 
-    // Update progress bar
-    const progressBar = document.getElementById(`alliance${alliance.id}Progress`);
-    if (progressBar) {
-      progressBar.style.width = percentage + '%';
-    }
+    if (votesEl) votesEl.textContent = alliance.votes;
+    if (percentageEl) percentageEl.textContent = percentage + '%';
+    if (voterCountEl) voterCountEl.textContent = alliance.voterIds.length;
+    if (progressBarEl) progressBarEl.style.width = percentage + '%';
   });
+
+  console.log('Dashboard updated - Total votes:', totalVotes);
 }
 
 function resetPollData() {
@@ -269,12 +371,18 @@ function resetPollData() {
     appData.alliances.forEach(alliance => {
       alliance.votes = 0;
       alliance.voterIds = [];
+      // Keep icons
     });
     appData.votedIds = [];
+
+    // Save the reset data immediately
+    saveData();
 
     // Update dashboard
     updateAdminDashboard();
     alert('Poll data has been reset successfully!');
+
+    console.log('Poll data reset');
   }
 }
 
@@ -300,19 +408,11 @@ function handleImageUpload(allianceId, event) {
     if (alliance) {
       alliance.icon = e.target.result;
 
-      // Update the icon display
-      const iconImg = document.getElementById(`icon${allianceId}`);
-      if (iconImg) {
-        iconImg.src = e.target.result;
-        iconImg.style.display = 'block';
-      }
+      // Save data with new icon
+      saveData();
 
-      // Update voting page icon if visible
-      const votingIcon = document.getElementById(`votingIcon${allianceId}`);
-      if (votingIcon) {
-        votingIcon.src = e.target.result;
-        votingIcon.style.display = 'block';
-      }
+      // Update all icon displays
+      updateIconsFromData();
     }
   };
   reader.readAsDataURL(file);
@@ -320,6 +420,11 @@ function handleImageUpload(allianceId, event) {
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', function() {
+  console.log('DOM loaded, initializing app...');
+
+  // Initialize data first
+  initializeData();
+
   // Login form
   const loginForm = document.getElementById('loginForm');
   if (loginForm) {
@@ -403,50 +508,34 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
 
-  // Load existing icons
-  appData.alliances.forEach(alliance => {
-    if (alliance.icon) {
-      const iconImg = document.getElementById(`icon${alliance.id}`);
-      if (iconImg) {
-        iconImg.src = alliance.icon;
-        iconImg.style.display = 'block';
-      }
-    }
-  });
+  console.log('Event listeners attached');
 });
 
-// Auto-save data periodically (optional)
+// Auto-save data periodically
 setInterval(() => {
-  // Save to localStorage as backup
-  try {
-    localStorage.setItem('votingAppData', JSON.stringify(appData));
-  } catch (e) {
-    console.warn('Could not save to localStorage');
-  }
+  saveData();
 }, 30000); // Save every 30 seconds
 
-// Load data on startup
-window.addEventListener('load', () => {
-  try {
-    const savedData = localStorage.getItem('votingAppData');
-    if (savedData) {
-      const parsed = JSON.parse(savedData);
-      // Only restore if data structure matches
-      if (parsed.alliances && parsed.alliances.length === 3) {
-        appData = { ...appData, ...parsed };
-        // Restore icons
-        appData.alliances.forEach(alliance => {
-          if (alliance.icon) {
-            const iconImg = document.getElementById(`icon${alliance.id}`);
-            if (iconImg) {
-              iconImg.src = alliance.icon;
-              iconImg.style.display = 'block';
-            }
-          }
-        });
-      }
-    }
-  } catch (e) {
-    console.warn('Could not load saved data');
+// Save data when page is about to be closed/refreshed
+window.addEventListener('beforeunload', function() {
+  saveData();
+  console.log('Data saved before page unload');
+});
+
+// Save data when page becomes hidden (mobile/tab switching)
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'hidden') {
+    saveData();
+    console.log('Data saved - page hidden');
+  }
+});
+
+// Load and display data when page becomes visible again
+window.addEventListener('focus', function() {
+  console.log('Page focused - checking for data updates');
+  loadData();
+  updateIconsFromData();
+  if (appData.isAdminLoggedIn) {
+    updateAdminDashboard();
   }
 });
